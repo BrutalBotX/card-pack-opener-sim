@@ -38,7 +38,6 @@ func setup_card(id: String, data: Dictionary, rarities_db: Dictionary) -> void:
 		if rarity_group == "Star" or rarity_code == "RR":
 			is_special_rare = true
 	
-	var set_folder = data.get("set", "A1")
 	# Strictly grab the messy GitHub filename
 	var exact_image_name = data.get("image", "")
 	var image_path = "res://assets/cards/" + exact_image_name

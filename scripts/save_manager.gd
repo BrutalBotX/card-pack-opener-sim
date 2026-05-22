@@ -1,40 +1,32 @@
-extends RefCounted
-class_name SaveManager
+extends Node
 
-const SAVE_PATH = "user://inventory.json"
+var save_path = "user://tcg_inventory.save"
+var inventory: Dictionary = {}
 
-# Master function to load the player's binder collection
-static func load_inventory() -> Dictionary:
-	if not FileAccess.file_exists(SAVE_PATH):
-		print("No save file found. Creating a fresh, empty binder.")
-		return {} # Return an empty dictionary if it's a first-time player
-		
-	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
-	var json_string = file.get_as_text()
-	file.close()
-	
-	var json = JSON.new()
-	if json.parse(json_string) == OK:
-		return json.data
-		
-	return {}
+func _ready() -> void:
+	load_inventory()
 
-# Master function to save the binder collection to disk
-static func save_inventory(inventory: Dictionary) -> void:
-	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	var json_string = JSON.stringify(inventory)
-	file.store_string(json_string)
-	file.close()
-	print("Inventory permanently saved to offline storage!")
-
-# Helper function to add a batch of pulled cards to the inventory
-static func add_cards_to_inventory(card_ids: Array[String]) -> void:
-	var current_inventory = load_inventory()
-	
-	for id in card_ids:
-		if current_inventory.has(id):
-			current_inventory[id] += 1 # Increase count if we already own it
+func add_cards_to_inventory(card_ids: Array[String]) -> void:
+	# Adds the pulled cards to your collection and saves them instantly
+	for c_id in card_ids:
+		if inventory.has(c_id):
+			inventory[c_id] += 1
 		else:
-			current_inventory[id] = 1  # Add it to the binder if it's new
-			
-	save_inventory(current_inventory)
+			inventory[c_id] = 1
+	save_inventory()
+
+func get_inventory() -> Dictionary:
+	return inventory
+
+func save_inventory() -> void:
+	var file = FileAccess.open(save_path, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(inventory))
+
+func load_inventory() -> void:
+	if FileAccess.file_exists(save_path):
+		var file = FileAccess.open(save_path, FileAccess.READ)
+		if file:
+			var data = JSON.parse_string(file.get_as_text())
+			if typeof(data) == TYPE_DICTIONARY:
+				inventory = data

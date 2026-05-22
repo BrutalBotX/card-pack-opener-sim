@@ -75,13 +75,13 @@ func load_master_database() -> void:
 			for series_key in raw_sets.keys():
 				for s in raw_sets[series_key]:
 					var raw_code = str(s.get("code", ""))
-					var set_name = raw_code
+					var parsed_set_name = raw_code
 					
 					if typeof(s.get("name")) == TYPE_DICTIONARY:
-						set_name = s.get("name").get("en", raw_code)
+						parsed_set_name = s.get("name").get("en", raw_code)
 						
-					var packs = s.get("packs", [set_name])
-					if packs.is_empty(): packs = [set_name]
+					var packs = s.get("packs", [parsed_set_name])
+					if packs.is_empty(): packs = [parsed_set_name]
 						
 					for p_name in packs:
 						var p_id = raw_code.to_upper() + "|" + str(p_name)
@@ -93,7 +93,7 @@ func load_master_database() -> void:
 						pack_config[p_id] = {
 							"set_code": raw_code,
 							"pack_name": str(p_name), 
-							"set_name": set_name,
+							"set_name": parsed_set_name, # Updated here too!
 							"card_count": count
 						}
 
@@ -181,7 +181,7 @@ func _trigger_history_fetch(pack_name: String) -> void:
 	if error != OK:
 		info_dialog.dialog_text = "Error: Could not connect to the internet."
 
-func _on_history_request_completed(result, response_code, headers, body) -> void:
+func _on_history_request_completed(_result, response_code, _headers, body) -> void:
 	if response_code == 200:
 		var json = JSON.parse_string(body.get_string_from_utf8())
 		if json:

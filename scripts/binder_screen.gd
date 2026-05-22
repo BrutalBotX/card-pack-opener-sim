@@ -2,29 +2,28 @@ extends Control
 
 # State 1: Set Selection Menu
 @onready var set_selection_state: Control = $SetSelectionState
-@onready var set_grid_container: GridContainer = $SetSelectionState/ScrollContainer/CenterContainer/GridContainer
+@onready var set_grid_container: GridContainer = %SetSelectionGrid
 
 # State 2: Card Viewing Menu
 @onready var card_view_state: Control = $CardViewState
-@onready var back_button: Button = $CardViewState/VBoxContainer/BackButton
-@onready var card_grid_container: GridContainer = $CardViewState/VBoxContainer/ScrollContainer/CenterContainer/GridContainer
+@onready var card_grid_container: GridContainer = %BinderCardGrid
 
+const CARD_SCENE = preload("res://scenes/card.tscn")
 const FALLBACK_IMAGE_PATH = "res://assets/packs/fallback.webp"
 
 var card_db: Dictionary = {}
 var set_groups: Dictionary = {} 
 var set_names: Dictionary = {}  
-var set_representatives: Dictionary = {} # Stores the cover image name for the set
+var set_representatives: Dictionary = {} 
+var rarities_db: Dictionary = {}
+
+var active_3d_popup: Control = null
 
 func _ready() -> void:
-	# Connect the back button
-	back_button.pressed.connect(_on_back_pressed)
-	
 	load_master_database()
 	build_set_selection_grid()
 
 func load_master_database() -> void:
-	# 1. Load sets.json to get the names and cover images
 	var s_file = FileAccess.open("res://data/sets.json", FileAccess.READ)
 	if s_file:
 		var raw_sets = JSON.parse_string(s_file.get_as_text())
@@ -32,21 +31,23 @@ func load_master_database() -> void:
 			for series_key in raw_sets.keys():
 				for s in raw_sets[series_key]:
 					var raw_code = str(s.get("code", ""))
-					var set_name = raw_code
+					var parsed_set_name = raw_code
 					if typeof(s.get("name")) == TYPE_DICTIONARY:
-						set_name = s.get("name").get("en", raw_code)
+						parsed_set_name = s.get("name").get("en", raw_code)
 					
-					set_names[raw_code] = set_name
+					set_names[raw_code] = parsed_set_name
 					set_groups[raw_code] = []
 					
-					# Grab the first pack in the array to act as the Set Cover Art
 					var packs = s.get("packs", [])
 					if packs.size() > 0:
 						set_representatives[raw_code] = str(packs[0])
 					else:
 						set_representatives[raw_code] = ""
 
-	# 2. Load cards.json and group them by set
+	var r_file = FileAccess.open("res://data/rarities.json", FileAccess.READ)
+	if r_file: 
+		rarities_db = JSON.parse_string(r_file.get_as_text())
+
 	var c_file = FileAccess.open("res://data/cards.json", FileAccess.READ)
 	if c_file:
 		var raw_cards = JSON.parse_string(c_file.get_as_text())
@@ -57,10 +58,11 @@ func load_master_database() -> void:
 				var c_id = set_code.to_upper() + "-" + num_str
 				
 				card_db[c_id] = {
+					"name": card.get("name", "Unknown"),
+					"rarity": str(card.get("rarity", "C")),
 					"image": card.get("image", "")
 				}
 				
-				# Catch any weird unmapped sets
 				if not set_groups.has(set_code):
 					set_groups[set_code] = []
 					set_names[set_code] = set_code
@@ -86,7 +88,6 @@ func build_set_selection_grid() -> void:
 		set_btn.stretch_mode = TextureButton.STRETCH_SCALE
 		set_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		
-		# Find the pack wrapper image to use as the button
 		var pack_name = set_representatives.get(set_code, "")
 		var target_path = "res://assets/packs/" + pack_name + ".webp"
 		
@@ -103,7 +104,6 @@ func build_set_selection_grid() -> void:
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		name_label.custom_minimum_size = Vector2(180, 0)
 		
-		# When clicked, open this specific set's binder
 		set_btn.pressed.connect(func(): _on_set_selected(set_code))
 		
 		item_vbox.add_child(set_btn)
@@ -114,15 +114,6 @@ func _on_set_selected(set_code: String) -> void:
 	set_selection_state.visible = false
 	card_view_state.visible = true
 	build_binder_grid(set_code)
-
-func _on_back_pressed() -> void:
-	# Go back to the set selector
-	set_selection_state.visible = true
-	card_view_state.visible = false
-	
-	# CRITICAL: Destroy the loaded cards to prevent lag!
-	for child in card_grid_container.get_children():
-		child.queue_free()
 
 func build_binder_grid(set_code: String) -> void:
 	for child in card_grid_container.get_children():
@@ -139,9 +130,11 @@ func build_binder_grid(set_code: String) -> void:
 	
 	for c_id in cards_in_set:
 		var card_data = card_db[c_id]
+		var is_owned = inventory.has(c_id) and int(inventory[c_id]) > 0
 		var exact_image_name = card_data.get("image", "")
 		var image_path = "res://assets/cards/" + exact_image_name
 		
+		# 1. Standard Lightweight 2D Grid Setup
 		var slot = TextureRect.new()
 		slot.custom_minimum_size = Vector2(200, 280)
 		slot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -164,12 +157,90 @@ func build_binder_grid(set_code: String) -> void:
 		
 		slot.add_child(count_label)
 		
-		# Illuminate collected cards, darken uncollected ones
-		if inventory.has(c_id) and int(inventory[c_id]) > 0:
+		# 2. Dynamic Interaction Logic
+		if is_owned:
 			slot.modulate = Color(1.0, 1.0, 1.0, 1.0) 
 			count_label.text = "x" + str(int(inventory[c_id])) + " "
+			
+			# Make the 2D slot detect mouse/touch input
+			slot.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			slot.gui_input.connect(func(event: InputEvent):
+				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+					spawn_3d_inspection_popup(c_id, card_data)
+			)
 		else:
-			slot.modulate = Color(0.1, 0.1, 0.1, 0.8) 
+			slot.modulate = Color(0.1, 0.1, 0.1, 0.8) # Gray out unowned
 			count_label.text = ""
 			
 		card_grid_container.add_child(slot)
+
+# --- Full-Screen 3D Pop-up System ---
+func spawn_3d_inspection_popup(c_id: String, card_data: Dictionary) -> void:
+	# Clean up any existing pop-up just in case
+	if active_3d_popup != null:
+		active_3d_popup.queue_free()
+		
+	# 1. Create a dark, slightly transparent background block
+	active_3d_popup = ColorRect.new()
+	active_3d_popup.color = Color(0, 0, 0, 0.85) 
+	active_3d_popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	active_3d_popup.z_index = 100 # Keep it on top of the UI
+	
+	# Close the pop-up if the user taps anywhere on the dark background
+	active_3d_popup.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			active_3d_popup.queue_free()
+			active_3d_popup = null
+	)
+	
+	add_child(active_3d_popup)
+	
+	# 2. Create a Full-Screen 3D Viewport with Padding
+	var viewport_container = SubViewportContainer.new()
+	viewport_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT) 
+	
+	# --- NEW: Wiggle Room / Padding ---
+	viewport_container.offset_left = 40
+	viewport_container.offset_top = 80 # Extra room for phone notches/status bars
+	viewport_container.offset_right = -40
+	viewport_container.offset_bottom = -120 # Keeps the card away from the hint text
+	
+	viewport_container.stretch = true
+	
+	# Pass clicks through to the background block so you can close it
+	viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE 
+	
+	active_3d_popup.add_child(viewport_container)
+	
+	var viewport = SubViewport.new()
+	viewport.transparent_bg = true
+	viewport_container.add_child(viewport)
+	
+	# 3. Add 3D Lighting and Camera
+	var cam = Camera3D.new()
+	cam.position = Vector3(0, 0, 3.5) 
+	viewport.add_child(cam)
+	
+	var light = DirectionalLight3D.new()
+	viewport.add_child(light)
+	
+	# 4. Instantiate the actual 3D Interactive Card Scene
+	var card_instance = CARD_SCENE.instantiate()
+	viewport.add_child(card_instance)
+	
+	# Configure the card visual and skip the flip animation
+	card_instance.setup_card(c_id, card_data, rarities_db)
+	card_instance.is_face_down = false
+	card_instance.visuals.rotation_degrees.y = 0 
+	
+	if card_instance.is_special_rare:
+		card_instance.shine_particles.emitting = true
+
+	# 5. Add a hint label at the bottom
+	var hint = Label.new()
+	hint.text = "Tap anywhere to close"
+	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	hint.offset_top = -60
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 20)
+	active_3d_popup.add_child(hint)
