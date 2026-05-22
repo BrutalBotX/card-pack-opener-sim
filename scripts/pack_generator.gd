@@ -1,7 +1,26 @@
 extends Node
 class_name PackGenerator
 
-static func generate_pack(master_db: Dictionary, selected_pack_id: String, pack_config: Dictionary, pull_rates_db: Dictionary) -> Array[String]:
+# STEP 1: Roll the 99.95% vs 0.05% appearance rate
+static func determine_pack_type(set_code: String, pull_rates_db: Dictionary) -> String:
+	if not pull_rates_db.has(set_code):
+		return "Regular Pack"
+		
+	var set_rates = pull_rates_db[set_code]
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
+	
+	if set_rates.has("Rare Pack"):
+		var rare_chance = float(set_rates["Rare Pack"]["appearance_rate"])
+		# Roll between 0.0 and 100.0 (e.g., 0.05 is 0.05%)
+		var pack_roll = rng.randf_range(0.0, 100.0)
+		if pack_roll <= rare_chance:
+			return "Rare Pack"
+			
+	return "Regular Pack"
+
+# STEP 2: Generate the cards strictly using the provided pack_type
+static func generate_pack(master_db: Dictionary, selected_pack_id: String, pack_config: Dictionary, pull_rates_db: Dictionary, pack_type: String) -> Array[String]:
 	var rolled_pack: Array[String] = []
 	
 	var p_conf = pack_config[selected_pack_id]
@@ -11,52 +30,45 @@ static func generate_pack(master_db: Dictionary, selected_pack_id: String, pack_
 	
 	var eligible_cards: Dictionary = {}
 	
-	# LEVEL 1: Try to match the exact Set and Pack Name
+# LEVEL 1: Map the eligible cards based on Set and Pack Name
 	for card_id in master_db.keys():
 		var c = master_db[card_id]
-		if c["set"] == set_code:
-			if pack_name in c["packs"] or c["packs"].is_empty():
+		
+		# SMART ADAPTER: Case-insensitive match prevents A1a vs A1A crashes
+		var is_match = (c["set"].to_upper() == set_code.to_upper()) or (set_code == "PROMO" and c["set"].to_upper().begins_with("PROMO"))
+		
+		if is_match:
+			if set_code == "PROMO" or pack_name in c["packs"] or c["packs"].is_empty():
 				var r = c["rarity"]
 				if not eligible_cards.has(r): eligible_cards[r] = []
 				eligible_cards[r].append(card_id)
 				
-	# LEVEL 2: If the datamine is missing pack names, fall back to ANY card in the Set
+	# LEVEL 2: Fallback if datamine is missing specific pack mappings
 	if eligible_cards.is_empty():
-		print("Warning: No cards matched pack '", pack_name, "'. Falling back to entire Set.")
 		for card_id in master_db.keys():
 			var c = master_db[card_id]
-			if c["set"] == set_code:
+			
+			# Applied the exact same case-insensitive match here
+			var is_match = (c["set"].to_upper() == set_code.to_upper()) or (set_code == "PROMO" and c["set"].to_upper().begins_with("PROMO"))
+			
+			if is_match:
 				var r = c["rarity"]
 				if not eligible_cards.has(r): eligible_cards[r] = []
 				eligible_cards[r].append(card_id)
-				
-	# LEVEL 3: If the Set is entirely empty/unmapped, fall back to the ENTIRE game
-	if eligible_cards.is_empty():
-		print("Critical: Set '", set_code, "' is empty! Falling back to global database.")
-		for card_id in master_db.keys():
-			var r = master_db[card_id]["rarity"]
-			if not eligible_cards.has(r): eligible_cards[r] = []
-			eligible_cards[r].append(card_id)
-			
+
 	if not pull_rates_db.has(set_code):
-		print("Warning: No pull rates mapped for set ", set_code, " - Using random fallback.")
 		return _fallback_random(eligible_cards, card_count)
 		
 	var set_rates = pull_rates_db[set_code]
 	
-	var is_rare_pack = false
+	if not set_rates.has(pack_type):
+		pack_type = "Regular Pack"
+		
+	var pack_def = set_rates[pack_type]
+	var slots = pack_def["slots"]
+	
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()
-	
-	if set_rates.has("Rare Pack"):
-		var rare_chance = float(set_rates["Rare Pack"]["appearance_rate"])
-		var pack_roll = rng.randf_range(0.0, 100.0)
-		if pack_roll <= rare_chance:
-			is_rare_pack = true
-			
-	var pack_type_key = "Rare Pack" if is_rare_pack else "Regular Pack"
-	var pack_def = set_rates[pack_type_key]
-	var slots = pack_def["slots"]
 	
 	for i in range(1, card_count + 1):
 		var slot_key = str(i)
@@ -80,11 +92,10 @@ static func generate_pack(master_db: Dictionary, selected_pack_id: String, pack_
 			var random_card = eligible_cards[chosen_rarity].pick_random()
 			rolled_pack.append(random_card)
 		else:
-			var any_valid_card = _get_any_valid_card(eligible_cards)
-			rolled_pack.append(any_valid_card)
+			rolled_pack.append(_get_any_valid_card(eligible_cards))
 			
 	return rolled_pack
-
+	
 static func _fallback_random(eligible_cards: Dictionary, count: int) -> Array[String]:
 	var fallback: Array[String] = []
 	for i in range(count):

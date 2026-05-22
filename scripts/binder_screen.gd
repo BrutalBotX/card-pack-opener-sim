@@ -31,18 +31,30 @@ func load_master_database() -> void:
 			for series_key in raw_sets.keys():
 				for s in raw_sets[series_key]:
 					var raw_code = str(s.get("code", ""))
+					var display_code = raw_code
 					var parsed_set_name = raw_code
+					
 					if typeof(s.get("name")) == TYPE_DICTIONARY:
 						parsed_set_name = s.get("name").get("en", raw_code)
+						
+					# --- SMART ADAPTER: Consolidate Promos ---
+					if raw_code.to_upper().begins_with("PROMO"):
+						display_code = "PROMO"
+						parsed_set_name = "Promotional Cards"
 					
-					set_names[raw_code] = parsed_set_name
-					set_groups[raw_code] = []
-					
-					var packs = s.get("packs", [])
-					if packs.size() > 0:
-						set_representatives[raw_code] = str(packs[0])
-					else:
-						set_representatives[raw_code] = ""
+					if not set_names.has(display_code):
+						set_names[display_code] = parsed_set_name
+						set_groups[display_code] = []
+						
+						var packs = s.get("packs", [])
+						
+						# FIX: Force the binder to use the unified Promo Pack image
+						if display_code == "PROMO":
+							set_representatives[display_code] = "Promo Pack"
+						elif packs.size() > 0:
+							set_representatives[display_code] = str(packs[0])
+						else:
+							set_representatives[display_code] = ""
 
 	var r_file = FileAccess.open("res://data/rarities.json", FileAccess.READ)
 	if r_file: 
@@ -54,8 +66,8 @@ func load_master_database() -> void:
 		if raw_cards:
 			for card in raw_cards:
 				var set_code = str(card.get("set", ""))
-				var num_str = str(card.get("number", "")).trim_suffix(".0") 
-				var c_id = set_code.to_upper() + "-" + num_str
+				var num_str = str(card.get("number", "")) 
+				var c_id = AssetLoader.generate_card_id(set_code, num_str)
 				
 				card_db[c_id] = {
 					"name": card.get("name", "Unknown"),
@@ -63,13 +75,21 @@ func load_master_database() -> void:
 					"image": card.get("image", "")
 				}
 				
-				if not set_groups.has(set_code):
-					set_groups[set_code] = []
-					set_names[set_code] = set_code
-					set_representatives[set_code] = ""
+				# --- SMART ADAPTER: Group into the consolidated set ---
+				var display_code = set_code 
+				
+				# We still want to safely catch Promos, so we use to_upper() only for the check
+				if display_code.to_upper().begins_with("PROMO"):
+					display_code = "PROMO"
 					
-				set_groups[set_code].append(c_id)
-
+				if not set_groups.has(display_code):
+					set_groups[display_code] = []
+					# Give it a safe fallback name
+					set_names[display_code] = "Promotional Cards" if display_code == "PROMO" else display_code
+					set_representatives[display_code] = "Promo Pack" if display_code == "PROMO" else ""
+					
+				set_groups[display_code].append(c_id)
+			
 func build_set_selection_grid() -> void:
 	set_selection_state.visible = true
 	card_view_state.visible = false
@@ -90,13 +110,9 @@ func build_set_selection_grid() -> void:
 		
 		var pack_name = set_representatives.get(set_code, "")
 		var target_path = "res://assets/packs/" + pack_name + ".webp"
-		
-		if pack_name != "" and ResourceLoader.exists(target_path): 
-			set_btn.texture_normal = load(target_path)
-		elif ResourceLoader.exists(FALLBACK_IMAGE_PATH):
-			set_btn.texture_normal = load(FALLBACK_IMAGE_PATH)
-		else:
-			set_btn.texture_normal = load("res://icon.svg")
+				
+		# DATA-DRIVEN FIX: Let the AssetLoader find the correct extension
+		set_btn.texture_normal = AssetLoader.get_pack_texture(pack_name)
 			
 		var name_label = Label.new()
 		name_label.text = set_code + " - " + set_names[set_code]
@@ -132,7 +148,6 @@ func build_binder_grid(set_code: String) -> void:
 		var card_data = card_db[c_id]
 		var is_owned = inventory.has(c_id) and int(inventory[c_id]) > 0
 		var exact_image_name = card_data.get("image", "")
-		var image_path = "res://assets/cards/" + exact_image_name
 		
 		# 1. Standard Lightweight 2D Grid Setup
 		var slot = TextureRect.new()
@@ -140,10 +155,8 @@ func build_binder_grid(set_code: String) -> void:
 		slot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		slot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		
-		if exact_image_name != "" and ResourceLoader.exists(image_path): 
-			slot.texture = load(image_path)
-		else: 
-			slot.texture = load("res://icon.svg")
+		# DATA-DRIVEN FIX: One line to load the texture safely!
+		slot.texture = AssetLoader.get_card_texture(exact_image_name)
 			
 		var count_label = Label.new()
 		count_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)

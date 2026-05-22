@@ -47,7 +47,6 @@ func _ready() -> void:
 	build_pack_selection_grid()
 
 func load_master_database() -> void:
-	# 1. Load Pull Rates FIRST so we can extract the correct card counts
 	var pr_file = FileAccess.open("res://data/pullRates.json", FileAccess.READ)
 	if pr_file: pull_rates = JSON.parse_string(pr_file.get_as_text())
 	
@@ -61,11 +60,10 @@ func load_master_database() -> void:
 			card_db.clear()
 			for card in raw_cards:
 				var c_id = AssetLoader.generate_card_id(str(card.get("set", "")), str(card.get("number", "")))
-				
 				card_db[c_id] = {
 					"name": card.get("name", "Unknown"),
 					"rarity": str(card.get("rarity", "C")),
-					"set": str(card.get("set", "")).to_upper(),
+					"set": str(card.get("set", "")), # Now it saves exactly as "A1a"
 					"packs": card.get("packs", []),
 					"image": card.get("image", "") 
 				}
@@ -83,14 +81,25 @@ func load_master_database() -> void:
 					if typeof(s.get("name")) == TYPE_DICTIONARY:
 						parsed_set_name = s.get("name").get("en", raw_code)
 						
+					# --- SMART ADAPTER: Consolidate Promos into 1 Pack ---
+					if raw_code.to_upper().begins_with("PROMO"):
+						var combined_id = "PROMO_COMBINED"
+						if not pack_config.has(combined_id):
+							pack_config[combined_id] = {
+								"set_code": "PROMO", # Our custom unified code
+								"pack_name": "Promo Pack", 
+								"set_name": "Promotional Cards",
+								"card_count": 1 # Promos give 1 card
+							}
+						continue # Skip processing the 16 individual volumes
+						
 					var packs = s.get("packs", [parsed_set_name])
 					if packs.is_empty(): packs = [parsed_set_name]
 						
 					for p_name in packs:
 						var p_id = raw_code.to_upper() + "|" + str(p_name)
 						
-						# DATA-DRIVEN CARD COUNT: Read directly from pullRates.json!
-						var count = 5 # Safe default
+						var count = 5 
 						if pull_rates.has(raw_code):
 							var rates_for_set = pull_rates[raw_code]
 							if rates_for_set.has("Regular Pack"):
@@ -188,23 +197,27 @@ func open_pack_carousel_illusion() -> void:
 	
 	for child in carousel_hbox.get_children(): child.queue_free()
 	
+	var p_conf = pack_config[selected_pack_id]
+	
 	for i in range(15):
 		var pack_option = TextureButton.new()
 		pack_option.custom_minimum_size = Vector2(250, 420)
 		pack_option.ignore_texture_size = true
 		pack_option.stretch_mode = TextureButton.STRETCH_SCALE
 		
-		var p_conf = pack_config[selected_pack_id]
-		var target_path = "res://assets/packs/" + p_conf["pack_name"] + ".webp"
+		# Assuming you have the AssetLoader setup from the previous step
+		pack_option.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
 		
-		if ResourceLoader.exists(target_path): 
-			pack_option.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
-		elif ResourceLoader.exists(FALLBACK_IMAGE_PATH):
-			pack_option.texture_normal = load(FALLBACK_IMAGE_PATH)
-		else:
-			pack_option.texture_normal = load("res://icon.svg")
+		# --- REALITY CHECK: Pre-roll the pack type! ---
+		var pack_type = PackGenerator.determine_pack_type(p_conf["set_code"], pull_rates)
+		
+		# Visual Cue: If a God Pack naturally spawned in the carousel, make it glow golden!
+		if pack_type == "Rare Pack":
+			pack_option.modulate = Color(1.5, 1.3, 0.8) 
+			print("🚨 A GOD PACK HAS SPAWNED IN THE CAROUSEL! 🚨")
 			
-		pack_option.pressed.connect(start_pack_tear_sequence)
+		# Bind THIS specific pack's rolled type to the tear sequence
+		pack_option.pressed.connect(func(): start_pack_tear_sequence(pack_type))
 		carousel_hbox.add_child(pack_option)
 		
 	await get_tree().process_frame
@@ -214,19 +227,12 @@ func open_pack_carousel_illusion() -> void:
 		scroll_container.scroll_horizontal = int(single_set_width)
 		is_carousel_ready = true
 
-func _process(_delta: float) -> void:
-	if not is_carousel_ready or not carousel_state.visible: return
-
-	if scroll_container.scroll_horizontal < 10:
-		scroll_container.scroll_horizontal += int(single_set_width)
-	elif scroll_container.scroll_horizontal > int(single_set_width * 2) - 10:
-		scroll_container.scroll_horizontal -= int(single_set_width)
-
-func start_pack_tear_sequence() -> void:
+func start_pack_tear_sequence(pack_type: String) -> void:
 	carousel_state.visible = false
 	tear_and_reveal_state.visible = true
 	
-	var rolled_pack = PackGenerator.generate_pack(card_db, selected_pack_id, pack_config, pull_rates)
+	# Pass the pre-rolled pack type straight into the generator
+	var rolled_pack = PackGenerator.generate_pack(card_db, selected_pack_id, pack_config, pull_rates, pack_type)
 	
 	current_pack_card_ids.clear()
 	current_pack_card_ids.assign(rolled_pack)
@@ -236,6 +242,14 @@ func start_pack_tear_sequence() -> void:
 		sm.add_cards_to_inventory(current_pack_card_ids)
 		
 	spawn_next_card_in_sequence()
+
+func _process(_delta: float) -> void:
+	if not is_carousel_ready or not carousel_state.visible: return
+
+	if scroll_container.scroll_horizontal < 10:
+		scroll_container.scroll_horizontal += int(single_set_width)
+	elif scroll_container.scroll_horizontal > int(single_set_width * 2) - 10:
+		scroll_container.scroll_horizontal -= int(single_set_width)
 
 func spawn_next_card_in_sequence() -> void:
 	if current_pack_card_ids.is_empty():
