@@ -12,12 +12,13 @@ func _process(_delta: float) -> void:
 	# Pass to shader
 	if material is ShaderMaterial:
 		material.set_shader_parameter("mouse_pos", normalized_mouse)
-
+"""
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		spawn_sparkle(event.position)
-
+		
 func spawn_sparkle(pos: Vector2) -> void:
+
 	var particles = CPUParticles2D.new()
 	
 	# Configure the particles via code so you don't need a separate node
@@ -40,4 +41,4 @@ func spawn_sparkle(pos: Vector2) -> void:
 	
 	# Clean up automatically after animation
 	await particles.finished
-	particles.queue_free()
+	particles.queue_free()"""

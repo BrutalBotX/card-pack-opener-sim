@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://c614iu6trcrwd"]
+
+[ext_resource type="Script" uid="uid://bfqmk5mt5dkm0" path="res://scripts/main_hub.gd" id="1_oa6wl"]
+[ext_resource type="Script" uid="uid://cdyvqmbcevopj" path="res://scripts/nav_button.gd" id="2_7v7ny"]
+[ext_resource type="Shader" uid="uid://djy7v5hp5wmj5" path="res://scripts/parallax_background.gdshader" id="2_gr3u7"]
+[ext_resource type="Texture2D" uid="uid://cg50nqgbyyn5s" path="res://assets/bg.png" id="3_e8wc2"]
+[ext_resource type="Script" uid="uid://ldjs63roum4c" path="res://scripts/background_controller.gd" id="4_e8wc2"]
+[ext_resource type="Texture2D" uid="uid://dsfyqmfmnsjhe" path="res://assets/rarities/diamond.webp" id="5_gr3u7"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5tf8n"]
+shader = ExtResource("2_gr3u7")
+shader_parameter/mouse_pos = Vector2(0, 0)
+shader_parameter/intensity = 0.03
+
+[node name="MainHub" type="Control" unique_id=674431371]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_oa6wl")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=767863310]
+material = SubResource("ShaderMaterial_5tf8n")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_e8wc2")
+expand_mode = 3
+script = ExtResource("4_e8wc2")
+sparkle_texture = ExtResource("5_gr3u7")
+
+[node name="ScreenContainer" type="Control" parent="." unique_id=11638409]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 1088.0
+grow_horizontal = 2
+
+[node name="BottomNavBar" type="HBoxContainer" parent="." unique_id=1549357272]
+custom_minimum_size = Vector2(720, 0)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -200.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="BtnShop" type="Button" parent="BottomNavBar" unique_id=1631609488]
+custom_minimum_size = Vector2(360, 200)
+layout_direction = 2
+layout_mode = 2
+theme_override_constants/h_separation = 15
+text = "OPEN PACKS"
+script = ExtResource("2_7v7ny")
+
+[node name="BtnBinder" type="Button" parent="BottomNavBar" unique_id=91959581]
+custom_minimum_size = Vector2(360, 0)
+layout_direction = 2
+layout_mode = 2
+theme_override_constants/h_separation = 15
+text = "MY BINDER"
+script = ExtResource("2_7v7ny")

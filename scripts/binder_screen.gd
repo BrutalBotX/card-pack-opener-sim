@@ -19,10 +19,26 @@ var rarities_db: Dictionary = {}
 
 var active_3d_popup: Control = null
 
+func load_inventory() -> void:
+	var path = "user://inventory.json"
+	if FileAccess.file_exists(path):
+		var file = FileAccess.open(path, FileAccess.READ)
+		var content = file.get_as_text()
+		print("DEBUG: Inventory file found. Size: ", content.length(), " characters.")
+		var data = JSON.parse_string(content)
+		if data == null:
+			print("ERROR: Inventory.json is corrupted!")
+		else:
+			print("DEBUG: Loaded ", data.size(), " cards from inventory.")
+	else:
+		print("DEBUG: No inventory.json found at ", path)
+		
+
 func _ready() -> void:
 	load_master_database()
 	build_set_selection_grid()
-
+	
+	
 func load_master_database() -> void:
 	var s_file = FileAccess.open("res://data/sets.json", FileAccess.READ)
 	if s_file:
