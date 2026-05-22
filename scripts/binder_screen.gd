@@ -109,7 +109,6 @@ func build_set_selection_grid() -> void:
 		set_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		
 		var pack_name = set_representatives.get(set_code, "")
-		var target_path = "res://assets/packs/" + pack_name + ".webp"
 				
 		# DATA-DRIVEN FIX: Let the AssetLoader find the correct extension
 		set_btn.texture_normal = AssetLoader.get_pack_texture(pack_name)
@@ -192,7 +191,8 @@ func spawn_3d_inspection_popup(c_id: String, card_data: Dictionary) -> void:
 	# Clean up any existing pop-up just in case
 	if active_3d_popup != null:
 		active_3d_popup.queue_free()
-		
+	
+	
 	# 1. Create a dark, slightly transparent background block
 	active_3d_popup = ColorRect.new()
 	active_3d_popup.color = Color(0, 0, 0, 0.85) 
@@ -227,11 +227,12 @@ func spawn_3d_inspection_popup(c_id: String, card_data: Dictionary) -> void:
 	
 	var viewport = SubViewport.new()
 	viewport.transparent_bg = true
+	viewport.physics_object_picking = true 
 	viewport_container.add_child(viewport)
 	
 	# 3. Add 3D Lighting and Camera
 	var cam = Camera3D.new()
-	cam.position = Vector3(0, 0, 3.5) 
+	cam.position = Vector3(0, 0, 6) 
 	viewport.add_child(cam)
 	
 	var light = DirectionalLight3D.new()

@@ -14,11 +14,12 @@ extends Control
 const CARD_SCENE = preload("res://scenes/card.tscn")
 const FALLBACK_IMAGE_PATH = "res://assets/packs/fallback.webp"
 
+
 var card_db: Dictionary = {}
 var pack_config: Dictionary = {}
 var pull_rates: Dictionary = {}
 var rarities_db: Dictionary = {}
-
+var current_pack_type: String = "Regular Pack"
 var selected_pack_id: String = ""
 var current_pack_card_ids: Array[String] = []
 var active_spawned_card: Node3D = null
@@ -136,7 +137,14 @@ func build_pack_selection_grid() -> void:
 		pack_btn.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
 			
 		var name_label = Label.new()
-		name_label.text = p_conf["pack_name"]
+		name_label.text = p_conf["set_code"] + " - " + p_conf["set_name"]
+		
+		# If you want the specific pack name underneath, you can add a sub-label:
+		# var sub_label = Label.new()
+		# sub_label.text = p_conf["pack_name"]
+		# sub_label.add_theme_font_size_override("font_size", 12)
+		# item_vbox.add_child(sub_label)
+		
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		name_label.custom_minimum_size = Vector2(180, 0)
@@ -230,6 +238,7 @@ func open_pack_carousel_illusion() -> void:
 func start_pack_tear_sequence(pack_type: String) -> void:
 	carousel_state.visible = false
 	tear_and_reveal_state.visible = true
+	print("DEBUG [PackTear]: Opening pack type: ", pack_type)
 	
 	# Pass the pre-rolled pack type straight into the generator
 	var rolled_pack = PackGenerator.generate_pack(card_db, selected_pack_id, pack_config, pull_rates, pack_type)
@@ -251,13 +260,13 @@ func _process(_delta: float) -> void:
 	elif scroll_container.scroll_horizontal > int(single_set_width * 2) - 10:
 		scroll_container.scroll_horizontal -= int(single_set_width)
 
-func spawn_next_card_in_sequence() -> void:
+func spawn_next_card_in_sequence(pack_type: String = "Unknown") -> void:	
 	if current_pack_card_ids.is_empty():
 		build_pack_selection_grid()
 		return
+	current_pack_type = pack_type
 		
 	var next_id = current_pack_card_ids.pop_front()
-	
 	# === THE CRASH SHIELD ===
 	# Safely skips if datamine JSON threw out a bad ID
 	if not card_db.has(next_id):
@@ -271,8 +280,9 @@ func spawn_next_card_in_sequence() -> void:
 	active_spawned_card.card_clicked_face_up.connect(advance_pack_deck)
 	active_spawned_card.position = Vector3(0, 0, 0)
 	
-	active_spawned_card.setup_card(next_id, card_db[next_id], rarities_db)
-
+	var origin_metadata = "Set: " + selected_pack_id
+	active_spawned_card.setup_card(next_id, card_db[next_id], rarities_db, origin_metadata)
+	
 func advance_pack_deck() -> void:
 	if active_spawned_card != null:
 		active_spawned_card.queue_free()

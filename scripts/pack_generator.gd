@@ -14,6 +14,11 @@ static func determine_pack_type(set_code: String, pull_rates_db: Dictionary) -> 
 		var rare_chance = float(set_rates["Rare Pack"]["appearance_rate"])
 		# Roll between 0.0 and 100.0 (e.g., 0.05 is 0.05%)
 		var pack_roll = rng.randf_range(0.0, 100.0)
+		# --- DEBUG LOGGING ---
+		print("DEBUG [PackGen]: Set: ", set_code, " | Roll: ", snappedf(pack_roll, 0.01), 
+			  " | Chance: ", rare_chance, "%", 
+			  " | Outcome: ", "GOD PACK" if pack_roll <= rare_chance else "Normal Pack")
+		
 		if pack_roll <= rare_chance:
 			return "Rare Pack"
 			
