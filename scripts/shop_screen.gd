@@ -47,22 +47,25 @@ func _ready() -> void:
 	build_pack_selection_grid()
 
 func load_master_database() -> void:
+	# 1. Load Pull Rates FIRST so we can extract the correct card counts
+	var pr_file = FileAccess.open("res://data/pullRates.json", FileAccess.READ)
+	if pr_file: pull_rates = JSON.parse_string(pr_file.get_as_text())
+	
+	var r_file = FileAccess.open("res://data/rarities.json", FileAccess.READ)
+	if r_file: rarities_db = JSON.parse_string(r_file.get_as_text())
+
 	var c_file = FileAccess.open("res://data/cards.json", FileAccess.READ)
 	if c_file:
 		var raw_cards = JSON.parse_string(c_file.get_as_text())
 		if raw_cards:
 			card_db.clear()
 			for card in raw_cards:
-				var set_code = str(card.get("set", "")).to_upper()
-				var num_str = str(card.get("number", "")).trim_suffix(".0") 
-				var c_id = set_code + "-" + num_str 
+				var c_id = AssetLoader.generate_card_id(str(card.get("set", "")), str(card.get("number", "")))
 				
 				card_db[c_id] = {
 					"name": card.get("name", "Unknown"),
 					"rarity": str(card.get("rarity", "C")),
-					"type": str(card.get("element", "Colorless")),
-					"set": set_code,
-					"number": num_str,
+					"set": str(card.get("set", "")).to_upper(),
 					"packs": card.get("packs", []),
 					"image": card.get("image", "") 
 				}
@@ -86,22 +89,19 @@ func load_master_database() -> void:
 					for p_name in packs:
 						var p_id = raw_code.to_upper() + "|" + str(p_name)
 						
-						var count = 5
-						if raw_code.to_upper() != raw_code: count = 3
-						if "PROMO" in p_id: count = 1
+						# DATA-DRIVEN CARD COUNT: Read directly from pullRates.json!
+						var count = 5 # Safe default
+						if pull_rates.has(raw_code):
+							var rates_for_set = pull_rates[raw_code]
+							if rates_for_set.has("Regular Pack"):
+								count = int(rates_for_set["Regular Pack"].get("cards", 5))
 						
 						pack_config[p_id] = {
 							"set_code": raw_code,
 							"pack_name": str(p_name), 
-							"set_name": parsed_set_name, # Updated here too!
+							"set_name": parsed_set_name,
 							"card_count": count
 						}
-
-	var pr_file = FileAccess.open("res://data/pullRates.json", FileAccess.READ)
-	if pr_file: pull_rates = JSON.parse_string(pr_file.get_as_text())
-
-	var r_file = FileAccess.open("res://data/rarities.json", FileAccess.READ)
-	if r_file: rarities_db = JSON.parse_string(r_file.get_as_text())
 
 func build_pack_selection_grid() -> void:
 	for child in pack_grid_container.get_children(): child.queue_free()
@@ -113,7 +113,6 @@ func build_pack_selection_grid() -> void:
 	for p_id in pack_config.keys():
 		var p_conf = pack_config[p_id]
 		
-		# Create a Vertical Box to stack the Image and Text
 		var item_vbox = VBoxContainer.new()
 		item_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		item_vbox.add_theme_constant_override("separation", 10)
@@ -124,24 +123,15 @@ func build_pack_selection_grid() -> void:
 		pack_btn.stretch_mode = TextureButton.STRETCH_SCALE
 		pack_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		
-		var target_path = "res://assets/packs/" + p_conf["pack_name"] + ".webp"
-		
-		# Fallback Image Logic
-		if ResourceLoader.exists(target_path): 
-			pack_btn.texture_normal = load(target_path)
-		elif ResourceLoader.exists(FALLBACK_IMAGE_PATH):
-			pack_btn.texture_normal = load(FALLBACK_IMAGE_PATH)
-		else:
-			pack_btn.texture_normal = load("res://icon.svg") 
+		# Use the new Asset Loader
+		pack_btn.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
 			
-		# Text Label Below Pack
 		var name_label = Label.new()
 		name_label.text = p_conf["pack_name"]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		name_label.custom_minimum_size = Vector2(180, 0)
 		
-		# Custom Long-Press Logic
 		pack_btn.set_meta("press_start_time", 0)
 		pack_btn.set_meta("is_long_press", false)
 		
@@ -152,14 +142,12 @@ func build_pack_selection_grid() -> void:
 		
 		pack_btn.button_up.connect(func():
 			var press_duration = Time.get_ticks_msec() - pack_btn.get_meta("press_start_time")
-			# If held for more than 600 milliseconds, it's a long press!
 			if press_duration > 600:
 				pack_btn.set_meta("is_long_press", true)
 				_trigger_history_fetch(p_conf["pack_name"])
 		)
 		
 		pack_btn.pressed.connect(func():
-			# Only open the pack if they didn't just trigger the long-press info box
 			if not pack_btn.get_meta("is_long_press"):
 				_on_pack_type_selected(p_id)
 		)
@@ -210,7 +198,7 @@ func open_pack_carousel_illusion() -> void:
 		var target_path = "res://assets/packs/" + p_conf["pack_name"] + ".webp"
 		
 		if ResourceLoader.exists(target_path): 
-			pack_option.texture_normal = load(target_path)
+			pack_option.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
 		elif ResourceLoader.exists(FALLBACK_IMAGE_PATH):
 			pack_option.texture_normal = load(FALLBACK_IMAGE_PATH)
 		else:

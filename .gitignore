@@ -5,3 +5,4 @@ assets/
 backup/
 /compress_assets.py
 /generate_db.py
+/data

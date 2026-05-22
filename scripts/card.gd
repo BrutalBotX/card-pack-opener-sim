@@ -30,24 +30,17 @@ func _ready() -> void:
 
 func setup_card(id: String, data: Dictionary, rarities_db: Dictionary) -> void:
 	card_id = id
-	card_name = data["name"]
-	rarity_code = data["rarity"]
+	card_name = data.get("name", "Unknown")
+	rarity_code = data.get("rarity", "C")
 	
+	# Flawless JSON adaptation: Only shine if the database explicitly says it belongs to the Star group
 	if rarities_db.has(rarity_code):
-		var rarity_group = rarities_db[rarity_code].get("group", "")
-		if rarity_group == "Star" or rarity_code == "RR":
+		if rarities_db[rarity_code].get("group", "") == "Star":
 			is_special_rare = true
 	
-	# Strictly grab the messy GitHub filename
-	var exact_image_name = data.get("image", "")
-	var image_path = "res://assets/cards/" + exact_image_name
+	# Use the new Asset Loader
+	front_sprite.texture = AssetLoader.get_card_texture(data.get("image", ""))
 	
-	if exact_image_name != "" and ResourceLoader.exists(image_path): 
-		front_sprite.texture = load(image_path)
-	else:
-		print("Warning: Missing artwork asset at exact path: ", image_path)
-		front_sprite.texture = load("res://icon.svg")
-
 func _process(delta: float) -> void:
 	if is_face_down or is_animating: return
 		
