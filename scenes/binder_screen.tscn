@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://dev01fk068m1l"]
+
+[ext_resource type="Script" uid="uid://ew7lthto4y8s" path="res://scripts/binder_screen.gd" id="1_ofoxj"]
+
+[node name="BinderScreen" type="Control" unique_id=1920420053]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -200.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ofoxj")
+
+[node name="SetSelectionState" type="Control" parent="." unique_id=2013749479]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="SetSelectionState" unique_id=2020910820]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="SetSelectionState/ScrollContainer" unique_id=1707905234]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="SetSelectionState/ScrollContainer/CenterContainer" unique_id=1982005108]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="CardViewState" type="Control" parent="." unique_id=1445724811]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CardViewState" unique_id=1244791289]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="CardViewState/VBoxContainer" unique_id=884506572]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+text = "<Back to Sets"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CardViewState/VBoxContainer" unique_id=900780513]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="CardViewState/VBoxContainer/ScrollContainer" unique_id=1433324222]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 3

@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://c614iu6trcrwd"]
+
+[ext_resource type="Script" uid="uid://bfqmk5mt5dkm0" path="res://scripts/main_hub.gd" id="1_oa6wl"]
+
+[node name="MainHub" type="Control" unique_id=674431371]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_oa6wl")
+
+[node name="ScreenContainer" type="Control" parent="." unique_id=11638409]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 1088.0
+grow_horizontal = 2
+
+[node name="BottomNavBar" type="HBoxContainer" parent="." unique_id=1549357272]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -31.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="BtnShop" type="Button" parent="BottomNavBar" unique_id=1631609488]
+custom_minimum_size = Vector2(360, 200)
+layout_direction = 2
+layout_mode = 2
+text = "Open Packs"
+
+[node name="BtnBinder" type="Button" parent="BottomNavBar" unique_id=91959581]
+custom_minimum_size = Vector2(360, 0)
+layout_direction = 2
+layout_mode = 2
+text = "View Binder"

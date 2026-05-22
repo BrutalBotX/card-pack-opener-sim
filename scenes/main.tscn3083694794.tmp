@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://dslbopnqw5vtp"]
+
+[ext_resource type="Script" uid="uid://geuvgi6lg6lj" path="res://scripts/main.gd" id="1_o5qli"]
+
+[node name="Main" type="Node" unique_id=648255899]
+script = ExtResource("1_o5qli")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=926336874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+current = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=989576448]

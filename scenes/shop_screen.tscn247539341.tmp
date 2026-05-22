@@ -1,0 +1,89 @@
+[gd_scene format=3 uid="uid://0xw0qln1he6b"]
+
+[ext_resource type="Script" uid="uid://oh1qh0q08eck" path="res://scripts/shop_screen.gd" id="1_ca2qj"]
+
+[node name="ShopScreen" type="Control" unique_id=1165161161]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ca2qj")
+
+[node name="PackGridState" type="Control" parent="." unique_id=1780640513]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="GridContainer" parent="PackGridState" unique_id=101190287]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 2
+
+[node name="CarouselState" type="Control" parent="." unique_id=1889301384]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CarouselState" unique_id=1588550671]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CarouselState/ScrollContainer" unique_id=2139208632]
+layout_mode = 2
+
+[node name="TearAndRevealState" type="Control" parent="." unique_id=12027040]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="TearAndRevealState" unique_id=189211101]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="TearAndRevealState/SubViewportContainer" unique_id=825586487]
+handle_input_locally = false
+physics_object_picking = true
+size = Vector2i(720, 1280)
+render_target_update_mode = 0
+
+[node name="Camera3D" type="Camera3D" parent="TearAndRevealState/SubViewportContainer/SubViewport" unique_id=1524826149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
+keep_aspect = 0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="TearAndRevealState/SubViewportContainer/SubViewport" unique_id=1337472848]
