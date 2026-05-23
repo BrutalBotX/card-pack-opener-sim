@@ -21,7 +21,9 @@ var is_animating: bool = false
 
 const MAX_TILT_ANGLE = 8.0  
 const SMOOTH_SPEED = 8.0     
-const TARGET_3D_HEIGHT = 8
+
+#EDIT THIS TO CHANGE CARD SIZE
+const TARGET_3D_HEIGHT = 7.2
 
 # --- NEW: Holds our dynamic rarity icons ---
 var rarity_container: Node3D

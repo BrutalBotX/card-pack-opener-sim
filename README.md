@@ -26,30 +26,7 @@ res://
 
 The project relies on specific JSON structures for initialization.
 
-### cards.json
-```JSON
-
-{
-  "id": "string",
-  "name": "string",
-  "rarity": "string",
-  "set": "string",
-  "images": { "large": "url" }
-}
-
-```
-
-
-### sets.json
-```JSON
-
-{
-  "id": "string",
-  "name": "string",
-  "releaseDate": "YYYY-MM-DD"
-}
-
-```
+I'll add the structures for the JSONSs later
 
 
 🐛 Known Issues
@@ -67,5 +44,16 @@ FIXED
 FIXED
 
 - UI Standardization: Parallax background integration and button styling are pending global consistency checks.
+DONE
+
+- Add downloader for assets
+  DONE
+
+- Add compatibility for other card sets
+
+- Add Animations/Affects
+
+- Add Sound Effects
+
 
 Note: This project is intended for educational purposes and personal portfolio use.
