@@ -6,14 +6,31 @@ var inventory: Dictionary = {}
 func _ready() -> void:
 	load_inventory()
 
-func add_cards_to_inventory(card_ids: Array[String]) -> void:
-	# Adds the pulled cards to your collection and saves them instantly
-	for c_id in card_ids:
+func add_cards_to_inventory(new_card_ids: Array) -> void:
+	var inventory: Dictionary = {}
+	var path = "user://inventory.json"
+	
+	# 1. Load existing inventory first so we don't delete everything else!
+	if FileAccess.file_exists(path):
+		var file = FileAccess.open(path, FileAccess.READ)
+		var parsed = JSON.parse_string(file.get_as_text())
+		file.close()
+		if typeof(parsed) == TYPE_DICTIONARY:
+			inventory = parsed
+
+	# 2. Add the newly pulled cards to the dictionary
+	for c_id in new_card_ids:
 		if inventory.has(c_id):
 			inventory[c_id] += 1
 		else:
 			inventory[c_id] = 1
-	save_inventory()
+
+	# 3. Save it back to the disk
+	var save_file = FileAccess.open(path, FileAccess.WRITE)
+	save_file.store_string(JSON.stringify(inventory))
+	save_file.close()
+	
+	print("SUCCESS: Saved ", new_card_ids.size(), " new cards to disk!")
 
 func get_inventory() -> Dictionary:
 	return inventory

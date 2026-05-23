@@ -238,18 +238,23 @@ func open_pack_carousel_illusion() -> void:
 func start_pack_tear_sequence(pack_type: String) -> void:
 	carousel_state.visible = false
 	tear_and_reveal_state.visible = true
-	print("DEBUG [PackTear]: Opening pack type: ", pack_type)
 	
-	# Pass the pre-rolled pack type straight into the generator
+	current_pack_type = pack_type 
+	
+	# 1. Generate the cards
 	var rolled_pack = PackGenerator.generate_pack(card_db, selected_pack_id, pack_config, pull_rates, pack_type)
 	
+	# 2. Save them IMMEDIATELY
+	var sm = get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("add_cards_to_inventory"):
+		sm.add_cards_to_inventory(rolled_pack)
+	else:
+		push_error("CRITICAL: SaveManager not found! Cards were not saved.")
+	
+	# 3. Continue with the visual sequence
 	current_pack_card_ids.clear()
 	current_pack_card_ids.assign(rolled_pack)
 	
-	var sm = get_node_or_null("/root/SaveManager")
-	if sm and sm.has_method("add_cards_to_inventory"):
-		sm.add_cards_to_inventory(current_pack_card_ids)
-		
 	spawn_next_card_in_sequence()
 
 func _process(_delta: float) -> void:
