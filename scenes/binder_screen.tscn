@@ -2,6 +2,14 @@
 
 [ext_resource type="Script" uid="uid://ew7lthto4y8s" path="res://scripts/binder_screen.gd" id="1_ofoxj"]
 
+[sub_resource type="Gradient" id="Gradient_ofoxj"]
+offsets = PackedFloat32Array(0, 0.8596059, 1)
+colors = PackedColorArray(2.13, 2.13, 2.13, 1, 1.4927363, 1.4927363, 1.4927363, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_kpoqu"]
+gradient = SubResource("Gradient_ofoxj")
+fill_to = Vector2(0, 1)
+
 [node name="BinderScreen" type="Control" unique_id=1920420053]
 layout_mode = 3
 anchors_preset = 15
@@ -22,7 +30,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="SetSelectionState" unique_id=2020910820]
+[node name="TransparencyMask" type="TextureRect" parent="SetSelectionState" unique_id=651586462]
+clip_children = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+texture = SubResource("GradientTexture2D_kpoqu")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="SetSelectionState/TransparencyMask" unique_id=2020910820]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,12 +49,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="SetSelectionState/ScrollContainer" unique_id=1707905234]
+[node name="CenterContainer" type="CenterContainer" parent="SetSelectionState/TransparencyMask/ScrollContainer" unique_id=1707905234]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="SetSelectionGrid" type="GridContainer" parent="SetSelectionState/ScrollContainer/CenterContainer" unique_id=1982005108]
+[node name="SetSelectionGrid" type="GridContainer" parent="SetSelectionState/TransparencyMask/ScrollContainer/CenterContainer" unique_id=1982005108]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 6
@@ -60,11 +79,20 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="CardViewState/VBoxContainer" unique_id=900780513]
+[node name="TransparencyMask" type="TextureRect" parent="CardViewState/VBoxContainer" unique_id=1056518689]
+clip_children = 1
 layout_mode = 2
 size_flags_vertical = 3
+texture = SubResource("GradientTexture2D_kpoqu")
 
-[node name="BinderCardGrid" type="GridContainer" parent="CardViewState/VBoxContainer/ScrollContainer" unique_id=1433324222]
+[node name="ScrollContainer" type="ScrollContainer" parent="CardViewState/VBoxContainer/TransparencyMask" unique_id=900780513]
+layout_mode = 0
+offset_top = 4.0
+offset_right = 720.0
+offset_bottom = 1080.0
+size_flags_vertical = 3
+
+[node name="BinderCardGrid" type="GridContainer" parent="CardViewState/VBoxContainer/TransparencyMask/ScrollContainer" unique_id=1433324222]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 6
@@ -72,8 +100,7 @@ theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 20
 columns = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="CardViewState/VBoxContainer/ScrollContainer/BinderCardGrid" unique_id=2068747013]
+[node name="MarginContainer" type="MarginContainer" parent="CardViewState/VBoxContainer/TransparencyMask/ScrollContainer/BinderCardGrid" unique_id=2068747013]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_constants/margin_bottom = 0

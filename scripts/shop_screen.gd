@@ -2,7 +2,7 @@ extends Control
 
 @onready var pack_grid_state: Control = $PackGridState
 # Remember to wrap your GridContainer in a CenterContainer in the editor!
-@onready var pack_grid_container: GridContainer = $PackGridState/ScrollContainer/CenterContainer/GridContainer
+@onready var pack_grid_container: GridContainer = %PackGrid
 
 @onready var carousel_state: Control = $CarouselState
 @onready var scroll_container: ScrollContainer = $CarouselState/ScrollContainer

@@ -2,6 +2,14 @@
 
 [ext_resource type="Script" uid="uid://oh1qh0q08eck" path="res://scripts/shop_screen.gd" id="1_ca2qj"]
 
+[sub_resource type="Gradient" id="Gradient_ofoxj"]
+offsets = PackedFloat32Array(0, 0.8596059, 1)
+colors = PackedColorArray(2.13, 2.13, 2.13, 1, 1.4927363, 1.4927363, 1.4927363, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ca2qj"]
+gradient = SubResource("Gradient_ofoxj")
+fill_to = Vector2(0, 1)
+
 [node name="ShopScreen" type="Control" unique_id=1165161161]
 layout_mode = 3
 anchors_preset = 15
@@ -19,7 +27,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="PackGridState" unique_id=1218161049]
+[node name="TransparencyMask" type="TextureRect" parent="PackGridState" unique_id=1442186107]
+clip_children = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+texture = SubResource("GradientTexture2D_ca2qj")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PackGridState/TransparencyMask" unique_id=1218161049]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,11 +46,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="PackGridState/ScrollContainer" unique_id=1000207847]
+[node name="CenterContainer" type="CenterContainer" parent="PackGridState/TransparencyMask/ScrollContainer" unique_id=1000207847]
 custom_minimum_size = Vector2(720, 1080)
 layout_mode = 2
 
-[node name="GridContainer" type="GridContainer" parent="PackGridState/ScrollContainer/CenterContainer" unique_id=101190287]
+[node name="PackGrid" type="GridContainer" parent="PackGridState/TransparencyMask/ScrollContainer/CenterContainer" unique_id=101190287]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
