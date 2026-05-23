@@ -5,7 +5,7 @@
 A data-driven card collection and simulation engine built with Godot. This project focuses on managing card databases, rendering 3D assets, and simulating pack-opening mechanics.
 📦 Data Source
 
-This project utilizes the [pokemon-tcg-data](https://github.com/PokemonTCG/pokemon-tcg-data) repository for external datasets. Card images are sourced directly from their asset subdirectories.
+This project utilizes the [pokemon-tcg-pocket-database](https://github.com/flibustier/pokemon-tcg-pocket-database) repository for external datasets. Card images are sourced directly from their asset subdirectories.
 📂 Project Structure
 
 To ensure the engine correctly parses the database, please arrange your directory structure as follows:
