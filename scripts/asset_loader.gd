@@ -17,19 +17,28 @@ static func get_pack_texture(pack_name: String) -> Texture2D:
 		
 	return load(FALLBACK_CARD)
 
-static func get_card_texture(exact_image_name: String) -> Texture2D:
-	# If the JSON already provides the extension (e.g. "pikachu.webp")
-	if "." in exact_image_name:
-		var full_path = "res://assets/cards/" + exact_image_name
-		if ResourceLoader.exists(full_path):
-			return load(full_path)
-			
-	# If the JSON only provides the name (e.g. "pikachu")
-	var base_path = "res://assets/cards/" + exact_image_name
-	for ext in SUPPORTED_EXTENSIONS:
-		if ResourceLoader.exists(base_path + ext):
-			return load(base_path + ext)
-			
+# ADDED 'static' KEYWORD HERE
+static func get_card_texture(image_name: String) -> Texture2D:
+	# 1. Check if we downloaded it to the device (user://)
+	var user_path = "user://assets/cards/" + image_name
+	if FileAccess.file_exists(user_path):
+		var img = Image.load_from_file(user_path)
+		# Safety check: make sure the image actually loaded and isn't corrupted
+		if img != null and not img.is_empty():
+			return ImageTexture.create_from_image(img)
+		else:
+			push_error("Image file found but failed to load: " + user_path)
+		
+	# 2. Fallback to the packaged version if it isn't downloaded
+	var res_path = "res://assets/cards/" + image_name
+	if ResourceLoader.exists(res_path):
+		return load(res_path)
+		
+	# 3. Final Fallback
+	var fallback_path = "res://assets/cards/fallback.webp"
+	if ResourceLoader.exists(fallback_path):
+		return load(fallback_path)
+		
 	return load(FALLBACK_CARD)
 
 # Centralized ID Generator

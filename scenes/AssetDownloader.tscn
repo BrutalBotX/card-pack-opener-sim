@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://3ejylj1ssoav"]
+
+[ext_resource type="Script" uid="uid://b1od50gp5gmdc" path="res://scripts/asset_downloader.gd" id="1_7v5np"]
+
+[node name="AssetDownloader" type="Control" unique_id=1347778607]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7v5np")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1679208055]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01021489, 0.0701955, 0.073090605, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=543374609]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=192776045]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1631827765]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1417428405]
+layout_mode = 2
+text = "Ready"
+
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/VBoxContainer" unique_id=1765035228]
+layout_mode = 2
+
+[node name="ActionBtn" type="Button" parent="MarginContainer/VBoxContainer" unique_id=879984512]
+layout_mode = 2
+text = "Start / Resume Download"

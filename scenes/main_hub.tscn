@@ -12,6 +12,13 @@ shader = ExtResource("2_gr3u7")
 shader_parameter/mouse_pos = Vector2(0, 0)
 shader_parameter/intensity = 0.03
 
+[sub_resource type="Gradient" id="Gradient_gr3u7"]
+colors = PackedColorArray(1, 1, 1, 0, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_5tf8n"]
+gradient = SubResource("Gradient_gr3u7")
+fill_to = Vector2(0, 1)
+
 [node name="MainHub" type="Control" unique_id=674431371]
 layout_mode = 3
 anchors_preset = 15
@@ -40,6 +47,17 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 1088.0
 grow_horizontal = 2
+
+[node name="GlobalBottomFade" type="TextureRect" parent="." unique_id=1709135565]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+texture = SubResource("GradientTexture2D_5tf8n")
 
 [node name="BottomNavBar" type="HBoxContainer" parent="." unique_id=1549357272]
 custom_minimum_size = Vector2(720, 0)
