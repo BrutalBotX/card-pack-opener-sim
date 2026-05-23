@@ -57,11 +57,14 @@ The project relies on specific JSON structures for initialization.
 Current status: Active Development## FAQ
 
 
-- Binder Persistence: Inventory state is currently failing to load/render consistently from inventory.json.
+- Binder Persistence: Inventory state is currently failing to load/render consistently from inventory.json. 
+FIXED
 
 - 3D Asset Cropping: Assets within the binder sub-viewport require camera frustum adjustments.
+FIXED
 
 - Interaction Logic: Mouse-over triggers for 3D card tilt are causing jittering and require recalibration.
+FIXED
 
 - UI Standardization: Parallax background integration and button styling are pending global consistency checks.
 

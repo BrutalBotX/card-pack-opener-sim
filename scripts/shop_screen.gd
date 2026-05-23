@@ -1,7 +1,6 @@
 extends Control
 
 @onready var pack_grid_state: Control = $PackGridState
-# Remember to wrap your GridContainer in a CenterContainer in the editor!
 @onready var pack_grid_container: GridContainer = %PackGrid
 
 @onready var carousel_state: Control = $CarouselState
@@ -13,7 +12,6 @@ extends Control
 
 const CARD_SCENE = preload("res://scenes/card.tscn")
 const FALLBACK_IMAGE_PATH = "res://assets/packs/fallback.webp"
-
 
 var card_db: Dictionary = {}
 var pack_config: Dictionary = {}
@@ -41,7 +39,7 @@ func _ready() -> void:
 	info_dialog = AcceptDialog.new()
 	info_dialog.title = "Pack History"
 	info_dialog.dialog_text = "Loading data from the internet..."
-	info_dialog.dialog_autowrap = true # Godot 4 Specific syntax applied!
+	info_dialog.dialog_autowrap = true 
 	add_child(info_dialog)
 	
 	load_master_database()
@@ -64,7 +62,7 @@ func load_master_database() -> void:
 				card_db[c_id] = {
 					"name": card.get("name", "Unknown"),
 					"rarity": str(card.get("rarity", "C")),
-					"set": str(card.get("set", "")), # Now it saves exactly as "A1a"
+					"set": str(card.get("set", "")), 
 					"packs": card.get("packs", []),
 					"image": card.get("image", "") 
 				}
@@ -87,12 +85,12 @@ func load_master_database() -> void:
 						var combined_id = "PROMO_COMBINED"
 						if not pack_config.has(combined_id):
 							pack_config[combined_id] = {
-								"set_code": "PROMO", # Our custom unified code
+								"set_code": "PROMO",
 								"pack_name": "Promo Pack", 
 								"set_name": "Promotional Cards",
-								"card_count": 1 # Promos give 1 card
+								"card_count": 1 
 							}
-						continue # Skip processing the 16 individual volumes
+						continue 
 						
 					var packs = s.get("packs", [parsed_set_name])
 					if packs.is_empty(): packs = [parsed_set_name]
@@ -133,22 +131,8 @@ func build_pack_selection_grid() -> void:
 		pack_btn.stretch_mode = TextureButton.STRETCH_SCALE
 		pack_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		
-		# Use the new Asset Loader
 		pack_btn.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
 			
-		var name_label = Label.new()
-		name_label.text = p_conf["set_code"] + " - " + p_conf["set_name"]
-		
-		# If you want the specific pack name underneath, you can add a sub-label:
-		# var sub_label = Label.new()
-		# sub_label.text = p_conf["pack_name"]
-		# sub_label.add_theme_font_size_override("font_size", 12)
-		# item_vbox.add_child(sub_label)
-		
-		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		name_label.custom_minimum_size = Vector2(180, 0)
-		
 		pack_btn.set_meta("press_start_time", 0)
 		pack_btn.set_meta("is_long_press", false)
 		
@@ -170,7 +154,25 @@ func build_pack_selection_grid() -> void:
 		)
 		
 		item_vbox.add_child(pack_btn)
-		item_vbox.add_child(name_label)
+		
+		# --- DYNAMIC LOGO LOADER ---
+		var logo_texture = AssetLoader.get_set_logo_texture(p_conf["set_code"])
+		
+		if logo_texture != null:
+			var logo_rect = TextureRect.new()
+			logo_rect.texture = logo_texture
+			logo_rect.custom_minimum_size = Vector2(180, 60)
+			logo_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			logo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			item_vbox.add_child(logo_rect)
+		else:
+			var name_label = Label.new()
+			name_label.text = p_conf["set_code"] + " - " + p_conf["set_name"]
+			name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+			name_label.custom_minimum_size = Vector2(180, 0)
+			item_vbox.add_child(name_label)
+			
 		pack_grid_container.add_child(item_vbox)
 
 # Network Fetching Logic
@@ -179,7 +181,6 @@ func _trigger_history_fetch(pack_name: String) -> void:
 	info_dialog.dialog_text = "Connecting to database..."
 	info_dialog.popup_centered(Vector2(400, 300))
 	
-	# Placeholder API Request
 	var url = "https://jsonplaceholder.typicode.com/posts/1" 
 	var error = http_request.request(url)
 	
@@ -213,18 +214,14 @@ func open_pack_carousel_illusion() -> void:
 		pack_option.ignore_texture_size = true
 		pack_option.stretch_mode = TextureButton.STRETCH_SCALE
 		
-		# Assuming you have the AssetLoader setup from the previous step
 		pack_option.texture_normal = AssetLoader.get_pack_texture(p_conf["pack_name"])
 		
-		# --- REALITY CHECK: Pre-roll the pack type! ---
 		var pack_type = PackGenerator.determine_pack_type(p_conf["set_code"], pull_rates)
 		
-		# Visual Cue: If a God Pack naturally spawned in the carousel, make it glow golden!
 		if pack_type == "Rare Pack":
 			pack_option.modulate = Color(1.5, 1.3, 0.8) 
 			print("🚨 A GOD PACK HAS SPAWNED IN THE CAROUSEL! 🚨")
 			
-		# Bind THIS specific pack's rolled type to the tear sequence
 		pack_option.pressed.connect(func(): start_pack_tear_sequence(pack_type))
 		carousel_hbox.add_child(pack_option)
 		
@@ -265,20 +262,18 @@ func _process(_delta: float) -> void:
 	elif scroll_container.scroll_horizontal > int(single_set_width * 2) - 10:
 		scroll_container.scroll_horizontal -= int(single_set_width)
 
-func spawn_next_card_in_sequence(pack_type: String = "Unknown") -> void:	
+# FIX: Removed the pack_type parameter to prevent overriding the God Pack state during the reveal loop
+func spawn_next_card_in_sequence() -> void:    
 	if current_pack_card_ids.is_empty():
 		build_pack_selection_grid()
 		return
-	current_pack_type = pack_type
 		
 	var next_id = current_pack_card_ids.pop_front()
-	# === THE CRASH SHIELD ===
-	# Safely skips if datamine JSON threw out a bad ID
+	
 	if not card_db.has(next_id):
 		print("ERROR: Card ID not found in database: ", next_id)
 		advance_pack_deck() 
 		return
-	# ========================
 	
 	active_spawned_card = CARD_SCENE.instantiate()
 	pack_viewport.add_child(active_spawned_card)

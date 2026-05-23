@@ -10,10 +10,10 @@ config_version=5
 
 [application]
 
-config/name="TCGP_Pack_Opener"
+config/name="Game"
 run/main_scene="uid://3ejylj1ssoav"
 config/features=PackedStringArray("4.6", "Mobile")
-config/icon="res://icon.svg"
+config/icon="uid://qfpook6b5uvo"
 
 [autoload]
 

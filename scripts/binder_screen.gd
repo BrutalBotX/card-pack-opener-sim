@@ -19,6 +19,7 @@ var set_representatives: Dictionary = {}
 var rarities_db: Dictionary = {}
 
 var active_3d_popup: Control = null
+var current_viewed_set: String = "" # Safely tracks the open page
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
@@ -131,6 +132,7 @@ func load_master_database() -> void:
 func build_set_selection_grid() -> void:
 	set_selection_state.visible = true
 	card_view_state.visible = false
+	current_viewed_set = "" # Reset when viewing the master list
 	
 	for child in set_grid_container.get_children():
 		child.queue_free()
@@ -148,20 +150,32 @@ func build_set_selection_grid() -> void:
 		
 		var pack_name = set_representatives.get(set_code, "")
 		set_btn.texture_normal = AssetLoader.get_pack_texture(pack_name)
-			
-		var name_label = Label.new()
-		name_label.text = set_code + " - " + set_names[set_code]
-		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		name_label.custom_minimum_size = Vector2(180, 0)
-		
 		set_btn.pressed.connect(func(): _on_set_selected(set_code))
 		
 		item_vbox.add_child(set_btn)
-		item_vbox.add_child(name_label)
+		
+		# --- DYNAMIC LOGO LOADER ---
+		var logo_texture = AssetLoader.get_set_logo_texture(set_code)
+		
+		if logo_texture != null:
+			var logo_rect = TextureRect.new()
+			logo_rect.texture = logo_texture
+			logo_rect.custom_minimum_size = Vector2(180, 60)
+			logo_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			logo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			item_vbox.add_child(logo_rect)
+		else:
+			var name_label = Label.new()
+			name_label.text = set_code + " - " + set_names[set_code]
+			name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+			name_label.custom_minimum_size = Vector2(180, 0)
+			item_vbox.add_child(name_label)
+			
 		set_grid_container.add_child(item_vbox)
 
 func _on_set_selected(set_code: String) -> void:
+	current_viewed_set = set_code # Track which set is open
 	set_selection_state.visible = false
 	card_view_state.visible = true
 	build_binder_grid(set_code)
@@ -281,10 +295,6 @@ func _on_visibility_changed() -> void:
 	if visible: 
 		load_inventory()
 		
-		# If we are currently viewing a set when making the screen visible again, redraw it
-		if card_view_state.visible and not set_selection_state.visible:
-			for child in set_grid_container.get_children():
-				if child is VBoxContainer and child.get_child(0).button_pressed:
-					# This safely triggers a redraw of the current binder page
-					build_binder_grid(child.get_child(1).text.split(" - ")[0])
-					break
+		# Uses the safe tracker variable to redraw instead of relying on the UI text
+		if card_view_state.visible and not set_selection_state.visible and current_viewed_set != "":
+			build_binder_grid(current_viewed_set)
